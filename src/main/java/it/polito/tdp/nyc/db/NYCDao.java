@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import it.polito.tdp.nyc.model.Arco;
 import it.polito.tdp.nyc.model.Hotspot;
 
 public class NYCDao {
@@ -35,5 +37,82 @@ public class NYCDao {
 
 		return result;
 	}
+	
+	
+	public List<String> getProvider(){
+		
+		String sql = "SELECT DISTINCT Provider "
+				+ "FROM nyc_wifi_hotspot_locations "
+				+ "ORDER BY Provider";
+		List<String> result = new ArrayList<>();
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				result.add(res.getString("Provider"));
+			}
+			
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+
+		return result;
+	}
+	
+	public List<String> getVertex(String provider){
+		
+		String sql = "SELECT Distinct City "
+				+ "FROM nyc_wifi_hotspot_locations "
+				+ "WHERE Provider = ? "
+				+ "ORDER by City";
+		List<String> result = new ArrayList<>();
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setString(1, provider);
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				result.add(res.getString("City"));
+			}
+			
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+
+		return result;
+	}
+	
+	public List<Arco> getEdges(String provider){
+		
+		String sql = "SELECT n1.OBJECTID as id1, n2.OBJECTID as id2 "
+				+ "FROM nyc_wifi_hotspot_locations n1, nyc_wifi_hotspot_locations n2 "
+				+ "WHERE n1.City <> n2.City AND n1.OBJECTID < n2.OBJECTID AND n1.Provider = n2.Provider AND n1.Provider = ?";
+		List<Arco> result = new ArrayList<>();
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setString(1, provider);
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				result.add(new Arco(res.getInt("id1"), res.getInt("id2")));
+			}
+			
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+
+		return result;	
+	}
+	
 	
 }
